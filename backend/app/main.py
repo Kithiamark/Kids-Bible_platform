@@ -1,7 +1,8 @@
 from fastapi import FastAPI
+from app.core.config import settings
 
 app = FastAPI(
-    title="Kids Bible Learning API",
+    title=settings.app_name,
     version="0.1.0",
     description="Backend API for Kids Bible Learning Platform"
 )
@@ -9,4 +10,7 @@ app = FastAPI(
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "environment": settings.environment
+    }
