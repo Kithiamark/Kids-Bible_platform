@@ -130,7 +130,8 @@ export default function AdminDashboard() {
             <span className="text-sm font-medium">Add Group</span>
           </button>
           <button 
-            className="bg-white/20 hover:bg-white/30 rounded-lg p-4 transition-colors text-left opacity-50 cursor-not-allowed"
+            onClick={() => navigate('/admin/chat')}
+            className="bg-white/20 hover:bg-white/30 rounded-lg p-4 transition-colors text-left"
           >
             <MessageSquare className="w-6 h-6 mb-2" />
             <span className="text-sm font-medium">View Messages</span>

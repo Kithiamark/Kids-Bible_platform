@@ -1,4 +1,4 @@
-# Kids Bible Learning Platform
+# Kids Delight Learning Platform
 
 A production-ready web application for children's Bible education with separate Admin/Teacher and Student experiences.
 

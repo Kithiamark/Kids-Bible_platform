@@ -11,7 +11,7 @@ from app.api.v1 import api_router
 app = FastAPI(
     title=settings.app_name,
     version=settings.api_version,
-    description="Kids Bible Learning Platform API",
+    description="Kids Delight Learning Platform API",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json"
@@ -55,7 +55,7 @@ app.include_router(api_router, prefix=f"/api/{settings.api_version}")
 def root():
     """Root endpoint."""
     return {
-        "message": "Kids Bible Learning Platform API",
+        "message": "Kids Delight Learning Platform API",
         "version": settings.api_version,
         "docs": "/api/docs"
     }

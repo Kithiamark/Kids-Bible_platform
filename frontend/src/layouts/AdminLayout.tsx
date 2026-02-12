@@ -28,7 +28,7 @@ export default function AdminLayout() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-6 border-b">
-            <h1 className="text-2xl font-bold text-teal-600">Kids Bible</h1>
+            <h1 className="text-2xl font-bold text-teal-600">Kids Delight</h1>
             <p className="text-sm text-gray-600 mt-1">Admin Panel</p>
           </div>
 

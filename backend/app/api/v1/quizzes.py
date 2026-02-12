@@ -25,6 +25,18 @@ def create_quiz(
     return QuizService.create_quiz(db, quiz_data, current_user.id)
 
 
+@router.get("/", response_model=List[QuizResponse])
+def list_quizzes(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(require_teacher),
+    db: Session = Depends(get_db)
+):
+    """List all quizzes (teacher/admin only)."""
+    quizzes = db.query(Quiz).offset(skip).limit(limit).all()
+    return quizzes
+
+
 @router.get("/lesson/{lesson_id}", response_model=List[QuizResponse])
 def list_quizzes_for_lesson(
     lesson_id: int,

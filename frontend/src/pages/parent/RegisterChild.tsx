@@ -97,7 +97,7 @@ export default function RegisterChild() {
                 className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               >
                 <option value="toddlers">Toddlers (Ages 0-3)</option>
-                <option value="ages_4_9">Kids (Ages 4-9)</option>
+                <option value="ages_4_9">Kids Delight(Ages 4-9)</option>
                 <option value="ages_10_12">Pre-Teens (Ages 10-12)</option>
                 <option value="teens">Teens (Ages 13+)</option>
               </select>

@@ -1,6 +1,6 @@
 # Setup Instructions
 
-Quick guide to get the Kids Bible Learning Platform running locally.
+Quick guide to get the Kids Delight Learning Platform running locally.
 
 ## Prerequisites
 

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { studentAPI } from '../../lib/api';
 import { User, Award, TrendingUp, ChevronRight, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 export default function MyChildren() {
   const { data: students, isLoading } = useQuery({
@@ -70,7 +71,10 @@ export default function MyChildren() {
               </div>
 
               <div className="border-t pt-4">
-                <button className="w-full flex items-center justify-center space-x-2 text-teal-600 hover:text-teal-700 font-medium transition-colors">
+                <button 
+                  onClick={() => toast.success('Detailed progress view coming soon!')}
+                  className="w-full flex items-center justify-center space-x-2 text-teal-600 hover:text-teal-700 font-medium transition-colors"
+                >
                   <span>View Full Progress</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>

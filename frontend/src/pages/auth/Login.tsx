@@ -50,7 +50,7 @@ export default function Login() {
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-teal-600 mb-2">
-            Kids Bible Platform
+            Kids Delight Platform
           </h1>
           <p className="text-gray-600">Sign in to your account</p>
         </div>

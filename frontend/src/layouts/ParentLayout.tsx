@@ -26,7 +26,7 @@ export default function ParentLayout() {
     <div className="min-h-screen bg-gray-50 lg:flex">
       {/* Mobile Header */}
       <div className="lg:hidden bg-white shadow-sm sticky top-0 z-20 px-4 h-16 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-teal-600">Kids Bible Parent</h1>
+        <h1 className="text-xl font-bold text-teal-600">Kids Delight: Parent</h1>
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
@@ -44,7 +44,7 @@ export default function ParentLayout() {
         <div className="flex flex-col h-full pt-16 lg:pt-0">
           {/* Logo (Desktop only) */}
           <div className="hidden lg:block p-6 border-b">
-            <h1 className="text-2xl font-bold text-teal-600">Kids Bible</h1>
+            <h1 className="text-2xl font-bold text-teal-600">ble</h1>
             <p className="text-sm text-gray-600 mt-1">Parent Portal</p>
           </div>
 

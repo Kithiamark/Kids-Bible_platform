@@ -1,4 +1,4 @@
-# Kids Bible Learning Platform - Project Summary
+# Kids Delight Learning Platform - Project Summary
 
 ## 📋 Project Overview
 

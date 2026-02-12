@@ -4,9 +4,12 @@ import { lessonAPI } from '../../lib/api';
 import toast from 'react-hot-toast';
 import { Plus, Edit, Trash2, Eye, BookOpen } from 'lucide-react';
 
+import { useNavigate } from 'react-router-dom';
+
 export default function LessonManagement() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Silence unused variable warning until implemented
   console.log(showCreateModal);
@@ -266,11 +269,17 @@ export default function LessonManagement() {
                 <p className="text-gray-600 text-sm line-clamp-2 mb-4">{lesson.description}</p>
 
                 <div className="flex items-center space-x-2">
-                  <button className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-1">
+                  <button 
+                    onClick={() => navigate(`/admin/lessons/${lesson.id}/preview`)}
+                    className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-1"
+                  >
                     <Eye className="w-4 h-4" />
                     <span>View</span>
                   </button>
-                  <button className="flex-1 bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center space-x-1">
+                  <button 
+                    onClick={() => navigate(`/admin/lessons/${lesson.id}/edit`)}
+                    className="flex-1 bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center space-x-1"
+                  >
                     <Edit className="w-4 h-4" />
                     <span>Edit</span>
                   </button>

@@ -35,7 +35,7 @@ export default function Register() {
           <h1 className="text-3xl font-bold text-teal-600 mb-2">
             Create Account
           </h1>
-          <p className="text-gray-600">Join Kids Bible Platform</p>
+          <p className="text-gray-600">Join ble Platform</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

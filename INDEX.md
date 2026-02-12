@@ -1,4 +1,4 @@
-# Kids Bible Learning Platform - Documentation Index
+# Kids Delight Learning Platform - Documentation Index
 
 Welcome! This is your complete guide to navigating the project documentation.
 

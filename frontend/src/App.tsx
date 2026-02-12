@@ -16,7 +16,10 @@ import StudentLogin from './pages/auth/StudentLogin';
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import LessonManagement from './pages/admin/LessonManagement';
+import LessonEdit from './pages/admin/LessonEdit';
+import LessonPreview from './pages/admin/LessonPreview';
 import QuizManagement from './pages/admin/QuizManagement';
+import QuizEdit from './pages/admin/QuizEdit';
 import UserManagement from './pages/admin/UserManagement';
 import GroupManagement from './pages/admin/GroupManagement';
 import ChatManagement from './pages/admin/ChatManagement';
@@ -82,7 +85,10 @@ function App() {
           >
             <Route index element={<AdminDashboard />} />
             <Route path="lessons" element={<LessonManagement />} />
+            <Route path="lessons/:id/edit" element={<LessonEdit />} />
+            <Route path="lessons/:id/preview" element={<LessonPreview />} />
             <Route path="quizzes" element={<QuizManagement />} />
+            <Route path="quizzes/:id/edit" element={<QuizEdit />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="groups" element={<GroupManagement />} />
             <Route path="chat" element={<ChatManagement />} />

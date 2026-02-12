@@ -4,7 +4,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     # Application
-    app_name: str = "Kids Bible Learning Platform"
+    app_name: str = "Kids Delight Learning Platform"
     environment: str = "development"
     debug: bool = False
     api_version: str = "v1"

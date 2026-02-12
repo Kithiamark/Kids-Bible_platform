@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Kids Bible Learning Platform is a full-stack web application built with a modern, scalable architecture.
+The Kids Delight Learning Platform is a full-stack web application built with a modern, scalable architecture.
 
 ## Architecture Diagram
 

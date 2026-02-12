@@ -1,6 +1,6 @@
 # Deployment Guide for Azure (Free Tier)
 
-This guide outlines how to deploy the Kids Bible Platform to Azure, leveraging their free tier offerings where possible.
+This guide outlines how to deploy the Kids Delight Platform to Azure, leveraging their free tier offerings where possible.
 
 ## 1. Prerequisites
 

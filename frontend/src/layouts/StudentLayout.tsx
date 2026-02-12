@@ -31,7 +31,7 @@ export default function StudentLayout() {
               <div className="text-3xl">📖</div>
               <div>
                 <h1 className={`text-xl font-bold ${theme.text}`}>
-                  Kids Bible
+                  Kids Delight
                 </h1>
                 <p className={`text-xs ${theme.textSecondary}`}>Learning Platform</p>
               </div>

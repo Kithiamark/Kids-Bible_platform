@@ -6,6 +6,7 @@ import { Plus, Users, Edit, Trash2, UserPlus, X } from 'lucide-react';
 
 export default function GroupManagement() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<any>(null);
   const [managingGroupId, setManagingGroupId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
@@ -80,6 +81,19 @@ export default function GroupManagement() {
     },
   });
 
+  const updateGroup = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => groupAPI.updateGroup(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+      toast.success('Group updated successfully');
+      setShowCreateModal(false);
+      setEditingGroup(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || 'Failed to update group');
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -92,7 +106,11 @@ export default function GroupManagement() {
       is_active: formData.get('is_active') === 'on',
     };
 
-    createGroup.mutate(data);
+    if (editingGroup) {
+      updateGroup.mutate({ id: editingGroup.id, data });
+    } else {
+      createGroup.mutate(data);
+    }
   };
 
   return (
@@ -103,7 +121,10 @@ export default function GroupManagement() {
           <p className="text-gray-600 mt-1">Create and manage learning groups</p>
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => {
+            setEditingGroup(null);
+            setShowCreateModal(true);
+          }}
           className="bg-teal-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors flex items-center space-x-2"
         >
           <Plus className="w-5 h-5" />
@@ -211,7 +232,7 @@ export default function GroupManagement() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-6">Create New Group</h2>
+            <h2 className="text-2xl font-bold mb-6">{editingGroup ? 'Edit Group' : 'Create New Group'}</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Group Name</label>
@@ -219,6 +240,7 @@ export default function GroupManagement() {
                   name="name"
                   type="text"
                   required
+                  defaultValue={editingGroup?.name}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
               </div>
@@ -228,6 +250,7 @@ export default function GroupManagement() {
                 <textarea
                   name="description"
                   rows={3}
+                  defaultValue={editingGroup?.description}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
               </div>
@@ -237,6 +260,7 @@ export default function GroupManagement() {
                 <select
                   name="group_type"
                   required
+                  defaultValue={editingGroup?.group_type}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 >
                   <option value="age_group">Age Group</option>
@@ -249,6 +273,7 @@ export default function GroupManagement() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Age Group (Optional)</label>
                 <select
                   name="age_group"
+                  defaultValue={editingGroup?.age_group || ''}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 >
                   <option value="">None</option>
@@ -264,7 +289,7 @@ export default function GroupManagement() {
                   name="is_active"
                   type="checkbox"
                   id="is_active"
-                  defaultChecked
+                  defaultChecked={editingGroup ? editingGroup.is_active : true}
                   className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                 />
                 <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
@@ -275,17 +300,20 @@ export default function GroupManagement() {
               <div className="flex justify-end space-x-4 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setEditingGroup(null);
+                  }}
                   className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={createGroup.isPending}
+                  disabled={createGroup.isPending || updateGroup.isPending}
                   className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
                 >
-                  {createGroup.isPending ? 'Creating...' : 'Create Group'}
+                  {createGroup.isPending || updateGroup.isPending ? 'Saving...' : (editingGroup ? 'Save Changes' : 'Create Group')}
                 </button>
               </div>
             </form>
@@ -313,7 +341,13 @@ export default function GroupManagement() {
                   >
                     <UserPlus className="w-4 h-4" />
                   </button>
-                  <button className="text-gray-400 hover:text-blue-500 transition-colors">
+                  <button 
+                    onClick={() => {
+                      setEditingGroup(group);
+                      setShowCreateModal(true);
+                    }}
+                    className="text-gray-400 hover:text-blue-500 transition-colors"
+                  >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
