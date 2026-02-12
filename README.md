@@ -20,7 +20,7 @@ A production-ready web application for children's Bible education with separate 
 - Input validation and sanitization
 - Azure-managed encryption at rest
 
-## 🏗️ Architecture
+##  Architecture
 
 ### Backend (Python/FastAPI)
 ```
@@ -68,7 +68,7 @@ frontend/
 - **groups**: Learning groups by age/class
 - **messages**: Moderated group chat
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 - Python 3.11+
@@ -148,7 +148,7 @@ Services:
 - Backend: `http://localhost:8000`
 - Database: `localhost:5432`
 
-## 🧪 Testing
+##  Testing
 
 ### Backend Tests
 ```bash
@@ -178,75 +178,8 @@ npm test
 npm run test:coverage
 ```
 
-## 📦 Deployment
 
-### Azure Deployment
-
-#### Prerequisites
-- Azure subscription
-- Azure CLI installed
-- Container registry (Azure Container Registry or GitHub Container Registry)
-
-#### 1. Create Azure Resources
-```bash
-# Login to Azure
-az login
-
-# Create resource group
-az group create --name kids-bible-rg --location eastus
-
-# Create Azure PostgreSQL
-az postgres flexible-server create \
-  --resource-group kids-bible-rg \
-  --name kids-bible-db \
-  --location eastus \
-  --admin-user dbadmin \
-  --admin-password <secure-password> \
-  --sku-name Standard_B1ms \
-  --tier Burstable \
-  --version 16
-
-# Create Azure Container Apps environment
-az containerapp env create \
-  --name kids-bible-env \
-  --resource-group kids-bible-rg \
-  --location eastus
-```
-
-#### 2. Deploy with GitHub Actions
-Set up the following GitHub secrets:
-- `AZURE_CREDENTIALS`: Azure service principal
-- `AZURE_RESOURCE_GROUP`: Resource group name
-- `DATABASE_URL`: PostgreSQL connection string
-- `SECRET_KEY`: Application secret key
-
-Push to `main` branch to trigger automatic deployment.
-
-#### 3. Manual Docker Deployment
-```bash
-# Build images
-docker build -t kids-bible-backend:latest ./backend
-docker build -t kids-bible-frontend:latest ./frontend
-
-# Tag and push to registry
-docker tag kids-bible-backend:latest <your-registry>/kids-bible-backend:latest
-docker push <your-registry>/kids-bible-backend:latest
-
-docker tag kids-bible-frontend:latest <your-registry>/kids-bible-frontend:latest
-docker push <your-registry>/kids-bible-frontend:latest
-
-# Deploy to Azure Container Apps
-az containerapp create \
-  --name kids-bible-backend \
-  --resource-group kids-bible-rg \
-  --environment kids-bible-env \
-  --image <your-registry>/kids-bible-backend:latest \
-  --target-port 8000 \
-  --ingress external \
-  --env-vars DATABASE_URL=<connection-string> SECRET_KEY=<secret>
-```
-
-## 🔐 Security Best Practices
+## Security Best Practices
 
 1. **Environment Variables**: Never commit `.env` files
 2. **Database**: Use strong passwords and SSL connections
@@ -257,7 +190,7 @@ az containerapp create \
 7. **SQL Injection**: SQLAlchemy ORM prevents SQL injection
 8. **XSS Protection**: React automatically escapes content
 
-## 📊 Monitoring
+##  Monitoring
 
 ### Health Checks
 - Backend: `GET /health`
@@ -276,7 +209,7 @@ Consider adding:
 - Sentry for error tracking
 - Prometheus for metrics
 
-## 🎨 UI/UX Features
+##  UI/UX Features
 
 ### Teal-Based Color Scheme
 - Primary: Teal (#14b8a6)
@@ -318,9 +251,6 @@ Consider adding:
 - `PUT /api/v1/progress/lessons/{id}` - Update progress
 - `GET /api/v1/progress/dashboard` - Get dashboard stats
 
-## 📝 License
-
-[Your License Here]
 
 ## 👥 Contributing
 
@@ -329,10 +259,6 @@ Consider adding:
 3. Commit your changes
 4. Push to the branch
 5. Create a Pull Request
-
-## 📧 Support
-
-For support, email support@yourdomain.com or create an issue.
 
 ## 🙏 Acknowledgments
 
