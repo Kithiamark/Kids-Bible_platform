@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { userAPI, lessonAPI, studentAPI, quizAPI } from '../../lib/api';
+import { userAPI, lessonAPI, studentAPI, quizAPI, groupAPI } from '../../lib/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Users, BookOpen, Award, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -18,19 +18,28 @@ export default function AdminDashboard() {
 
   const { data: students } = useQuery({
     queryKey: ['students'],
-    queryFn: () => studentAPI.getMyStudents().then((res) => res.data).catch(() => []), // TODO: Add listAllStudents for admin
+    queryFn: () => studentAPI.listStudents().then((res) => res.data),
+  });
+
+  const { data: quizzes } = useQuery({
+    queryKey: ['quizzes'],
+    queryFn: () => quizAPI.listQuizzes().then((res) => res.data),
+  });
+
+  const { data: groups } = useQuery({
+    queryKey: ['groups'],
+    queryFn: () => groupAPI.listGroups().then((res) => res.data),
   });
 
   // Calculate real stats
-  const totalLessons = lessons?.length || 0;
   const publishedLessons = lessons?.filter((l: any) => l.is_published).length || 0;
   const totalStudents = students?.length || 0;
 
   const stats = [
     { label: 'Total Students', value: totalStudents.toString(), icon: Users, color: 'bg-blue-500' },
     { label: 'Published Lessons', value: publishedLessons.toString(), icon: BookOpen, color: 'bg-green-500' },
-    { label: 'Quizzes Created', value: '0', icon: Award, color: 'bg-purple-500' }, // TODO: Connect quiz count
-    { label: 'Messages Today', value: '0', icon: MessageSquare, color: 'bg-pink-500' }, // TODO: Connect messages
+    { label: 'Quizzes Created', value: (quizzes?.length || 0).toString(), icon: Award, color: 'bg-purple-500' },
+    { label: 'Active Groups', value: (groups?.length || 0).toString(), icon: MessageSquare, color: 'bg-pink-500' },
   ];
 
   const chartData = [

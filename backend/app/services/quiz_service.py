@@ -2,10 +2,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from fastapi import HTTPException, status
 from typing import List, Dict
-from datetime import datetime
+from datetime import UTC, datetime
+from app.models.lesson import Lesson
 from app.models.quiz import Quiz, Question, QuizAttempt, Answer
 from app.models.student import Student
-from app.schemas.quiz import QuizCreate, QuizSubmit, AnswerResult, QuizAttemptResponse
+from app.schemas.quiz import QuizCreate, QuizSubmit, QuizUpdate, AnswerResult, QuizAttemptResponse
 
 
 class QuizService:
@@ -44,6 +45,34 @@ class QuizService:
         db.commit()
         db.refresh(quiz)
         return quiz
+
+    @staticmethod
+    def update_quiz(db: Session, quiz: Quiz, quiz_update: QuizUpdate) -> Quiz:
+        """Update quiz metadata and replace its question set when provided."""
+        update_data = quiz_update.model_dump(exclude_unset=True, exclude={"questions"})
+        for field, value in update_data.items():
+            setattr(quiz, field, value)
+
+        if quiz_update.questions is not None:
+            db.query(Question).filter(Question.quiz_id == quiz.id).delete()
+            db.flush()
+            for index, question_data in enumerate(quiz_update.questions, start=1):
+                question = Question(
+                    quiz_id=quiz.id,
+                    question_type=question_data.question_type,
+                    question_text=question_data.question_text,
+                    image_url=question_data.image_url,
+                    options=question_data.options,
+                    correct_answer=question_data.correct_answer,
+                    points=question_data.points,
+                    order_index=question_data.order_index or index,
+                    explanation=question_data.explanation,
+                )
+                db.add(question)
+
+        db.commit()
+        db.refresh(quiz)
+        return quiz
     
     @staticmethod
     def start_quiz_attempt(db: Session, quiz_id: int, student_id: int) -> QuizAttempt:
@@ -54,6 +83,13 @@ class QuizService:
         
         if not quiz.is_active:
             raise HTTPException(status_code=400, detail="Quiz is not active")
+
+        student = db.query(Student).filter(Student.id == student_id).first()
+        lesson = db.query(Lesson).filter(Lesson.id == quiz.lesson_id).first()
+        if not student:
+            raise HTTPException(status_code=404, detail="Student not found")
+        if not lesson or not lesson.is_published or lesson.age_group != student.age_group:
+            raise HTTPException(status_code=403, detail="Quiz not available")
         
         # Check attempt limit
         if quiz.max_attempts:
@@ -97,6 +133,11 @@ class QuizService:
             raise HTTPException(status_code=400, detail="Quiz already completed")
         
         quiz = db.query(Quiz).filter(Quiz.id == attempt.quiz_id).first()
+        if not quiz:
+            raise HTTPException(status_code=404, detail="Quiz not found")
+        if submission.quiz_id != attempt.quiz_id:
+            raise HTTPException(status_code=400, detail="Submission does not match quiz attempt")
+
         questions = db.query(Question).filter(Question.quiz_id == quiz.id).all()
         questions_dict = {q.id: q for q in questions}
         
@@ -144,7 +185,7 @@ class QuizService:
         attempt.score = score
         attempt.is_passed = is_passed
         attempt.is_completed = True
-        attempt.completed_at = datetime.utcnow()
+        attempt.completed_at = datetime.now(UTC)
         
         # Update student points
         if is_passed:

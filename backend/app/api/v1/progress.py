@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import get_current_student
+from app.core.security import get_current_student, require_parent
 from app.models.student import Student
-from app.schemas.progress import ProgressUpdate, ProgressResponse, StudentDashboardStats
+from app.models.user import User
+from app.schemas.progress import ParentDashboardStats, ProgressUpdate, ProgressResponse, StudentDashboardStats
 from app.services.progress_service import ProgressService
 
 router = APIRouter()
@@ -45,3 +46,12 @@ def get_dashboard_stats(
 ):
     """Get dashboard statistics for current student."""
     return ProgressService.get_student_dashboard_stats(db, current_student.id)
+
+
+@router.get("/parent/dashboard", response_model=ParentDashboardStats)
+def get_parent_dashboard_stats(
+    current_user: User = Depends(require_parent),
+    db: Session = Depends(get_db)
+):
+    """Get aggregate progress statistics for the current parent's children."""
+    return ProgressService.get_parent_dashboard_stats(db, current_user.id)

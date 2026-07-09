@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Enum as SQLEnum, Boolean, JSON, Float
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Boolean, JSON, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
+from app.models.types import value_enum
 import enum
 
 
@@ -37,7 +38,7 @@ class Question(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     quiz_id = Column(Integer, ForeignKey("quizzes.id"), nullable=False)
-    question_type = Column(SQLEnum(QuestionType), nullable=False)
+    question_type = Column(value_enum(QuestionType, "questiontype"), nullable=False)
     question_text = Column(Text, nullable=False)
     image_url = Column(String, nullable=True)
     options = Column(JSON, nullable=False)  # List of option objects

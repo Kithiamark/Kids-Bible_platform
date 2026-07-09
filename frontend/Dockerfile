@@ -1,29 +1,21 @@
 # Build Stage
-FROM node:20-alpine as build
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY . .
+ARG VITE_API_BASE_URL=/api/v1
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN npm run build
 
 # Production Stage
 FROM nginx:alpine
 
 COPY --from=build /app/dist /usr/share/nginx/html
-
-# Copy custom nginx config if needed (optional, using default for now but might need SPA routing fix)
-# Create a simple nginx config for SPA
-RUN echo 'server { \
-    listen 80; \
-    location / { \
-        root /usr/share/nginx/html; \
-        index index.html index.htm; \
-        try_files $uri $uri/ /index.html; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 

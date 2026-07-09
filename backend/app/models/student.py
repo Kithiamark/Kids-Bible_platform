@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
+from app.models.types import value_enum
 import enum
 
 
@@ -19,7 +20,7 @@ class Student(Base):
     parent_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
     display_name = Column(String, nullable=False)
-    age_group = Column(SQLEnum(AgeGroup), nullable=False)
+    age_group = Column(value_enum(AgeGroup, "agegroup"), nullable=False)
     avatar_url = Column(String, nullable=True)
     current_level = Column(Integer, default=1, nullable=False)
     total_points = Column(Integer, default=0, nullable=False)

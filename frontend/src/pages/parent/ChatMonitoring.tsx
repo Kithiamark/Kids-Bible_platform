@@ -16,20 +16,13 @@ export default function ChatMonitoring() {
   });
 
   // Fetch Groups for Selected Student
-  const { data: studentGroups, isLoading: isLoadingGroups } = useQuery({
+  const { data: studentGroups } = useQuery({
     queryKey: ['studentGroups', selectedStudentId],
-    queryFn: () => groupAPI.getStudentGroups().then((res) => res.data), // This API might need adjustment to fetch groups for a specific student ID as parent
+    queryFn: () => groupAPI.getGroupsForStudent(selectedStudentId!).then((res) => res.data),
     enabled: !!selectedStudentId,
   });
-  
-  // NOTE: In a real implementation, we'd need an endpoint like `/groups/student/{student_id}` accessible to parents.
-  // For now, assuming the parent can see groups if they log in as student (which isn't ideal).
-  // Let's use a placeholder or assume `getStudentGroups` handles context if we switch tokens, 
-  // BUT proper RBAC would require `groupAPI.getGroupsForStudent(studentId)`. 
-  // I will assume for now we might need to rely on the backend allowing parents to query their child's groups.
 
   const selectedStudent = students?.find((s: any) => s.id === selectedStudentId);
-  // Cast age_group to any to avoid TS error since we know it matches the key from backend
   const studentTheme = selectedStudent ? themes[selectedStudent.age_group as keyof typeof themes] : themes.ages_4_9;
 
   return (

@@ -4,8 +4,7 @@ import { groupAPI, studentAPI } from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import { useStudentTheme } from '../../lib/theme';
 import ChatWindow from '../../components/chat/ChatWindow';
-import { MessageSquare, Users, Hash, Plus, X, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { MessageSquare, Users, Hash, Plus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function StudentChat() {

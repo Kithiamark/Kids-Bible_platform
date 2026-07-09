@@ -58,7 +58,7 @@ The Kids Delight Learning Platform is a full-stack web application built with a 
 ┌─────────────────────────────────────────────────────────────┐
 │                    Database Layer                            │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │  Azure PostgreSQL                                    │   │
+│  │  PostgreSQL                                          │   │
 │  │  - ACID compliance                                   │   │
 │  │  - Backup & recovery                                 │   │
 │  │  - Encryption at rest                                │   │
@@ -68,7 +68,7 @@ The Kids Delight Learning Platform is a full-stack web application built with a 
 ┌─────────────────────────────────────────────────────────────┐
 │                    External Services                         │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │  - Azure Blob Storage (media files)                  │   │
+│  │  - Optional object storage for media                 │   │
 │  │  - Spotify (podcast embeds)                          │   │
 │  │  - YouTube (video embeds)                            │   │
 │  └──────────────────────────────────────────────────────┘   │
@@ -312,21 +312,13 @@ quiz_attempts
 └─────────────────┘
 ```
 
-### Azure Infrastructure
+### Recommended Free Hosting Split
 ```
-Azure Front Door (CDN)
+Netlify / Vercel
        ↓
-Azure Load Balancer
+Koyeb (FastAPI API)
        ↓
-┌─────────────────────────┐
-│ Container Apps          │
-│ - Frontend (nginx)      │
-│ - Backend (FastAPI)     │
-└─────────────────────────┘
-       ↓
-Azure Database for PostgreSQL
-       ↓
-Azure Blob Storage (media)
+PostgreSQL on Oracle Cloud VM
 ```
 
 ## Performance Considerations
@@ -351,8 +343,8 @@ Azure Blob Storage (media)
 - Database connection pooling
 
 ### Vertical Scaling
-- Increase container resources as needed
-- Azure Container Apps auto-scaling
+- Increase service/container resources as needed
+- Scale the Koyeb service or move to a larger plan when necessary
 
 ## Security Architecture
 
@@ -361,7 +353,7 @@ Azure Blob Storage (media)
 2. **Application**: JWT authentication, RBAC
 3. **Database**: Encrypted connections, encrypted at rest
 4. **Code**: Input validation, SQL injection prevention
-5. **Infrastructure**: Azure security features
+5. **Infrastructure**: Hosting-provider firewalls, HTTPS, and least-privilege configuration
 
 ### Authentication & Authorization
 ```

@@ -6,6 +6,7 @@ from app.core.security import get_current_active_user, get_current_student, requ
 from app.models.user import User
 from app.models.student import Student
 from app.models.quiz import Quiz, QuizAttempt
+from app.models.lesson import Lesson
 from app.schemas.quiz import (
     QuizCreate, QuizUpdate, QuizResponse, QuizForStudent,
     QuizSubmit, QuizAttemptResponse
@@ -53,6 +54,25 @@ def list_quizzes_for_lesson(
     return query.all()
 
 
+@router.get("/student/lesson/{lesson_id}", response_model=List[QuizForStudent])
+def list_quizzes_for_student_lesson(
+    lesson_id: int,
+    current_student: Student = Depends(get_current_student),
+    db: Session = Depends(get_db)
+):
+    """Get active quizzes for a lesson as the current student."""
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    if not lesson.is_published or lesson.age_group != current_student.age_group:
+        raise HTTPException(status_code=403, detail="Lesson not available")
+
+    return db.query(Quiz).filter(
+        Quiz.lesson_id == lesson_id,
+        Quiz.is_active == True
+    ).all()
+
+
 @router.get("/{quiz_id}/student", response_model=QuizForStudent)
 def get_quiz_for_student(
     quiz_id: int,
@@ -66,6 +86,10 @@ def get_quiz_for_student(
     
     if not quiz.is_active:
         raise HTTPException(status_code=400, detail="Quiz is not active")
+
+    lesson = db.query(Lesson).filter(Lesson.id == quiz.lesson_id).first()
+    if not lesson or not lesson.is_published or lesson.age_group != current_student.age_group:
+        raise HTTPException(status_code=403, detail="Quiz not available")
     
     return quiz
 
@@ -136,13 +160,7 @@ def update_quiz(
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
     
-    update_data = quiz_update.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(quiz, field, value)
-    
-    db.commit()
-    db.refresh(quiz)
-    return quiz
+    return QuizService.update_quiz(db, quiz, quiz_update)
 
 
 @router.delete("/{quiz_id}")

@@ -1,4 +1,4 @@
-name: Build and Deploy to Azure
+name: Build and Deploy to AWS
 
 on:
   push:
@@ -6,68 +6,82 @@ on:
       - main
   workflow_dispatch:
 
-env:
-  AZURE_WEBAPP_NAME: kids-bible-platform
-  REGISTRY: ghcr.io
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
-  build-and-deploy:
+  deploy-backend:
     runs-on: ubuntu-latest
-    
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.modified, 'backend/')
+    defaults:
+      run:
+        working-directory: backend
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Log in to Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    - name: Build and push backend image
-      uses: docker/build-push-action@v5
-      with:
-        context: ./backend
-        push: true
-        tags: ${{ env.REGISTRY }}/${{ github.repository }}/backend:${{ github.sha }},${{ env.REGISTRY }}/${{ github.repository }}/backend:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
 
-    - name: Build and push frontend image
-      uses: docker/build-push-action@v5
-      with:
-        context: ./frontend
-        push: true
-        tags: ${{ env.REGISTRY }}/${{ github.repository }}/frontend:${{ github.sha }},${{ env.REGISTRY }}/${{ github.repository }}/frontend:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: SAM Build
+        run: sam build --use-container
 
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: SAM Deploy
+        run: |
+          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset \
+            --stack-name kids-bible-backend \
+            --capabilities CAPABILITY_IAM \
+            --region ${{ secrets.AWS_REGION }} \
+            --parameter-overrides Environment=production
 
-    - name: Deploy to Azure Container Apps
-      run: |
-        # Deploy backend
-        az containerapp update \
-          --name kids-bible-backend \
-          --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-          --image ${{ env.REGISTRY }}/${{ github.repository }}/backend:${{ github.sha }}
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.modified, 'frontend/')
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-        # Deploy frontend
-        az containerapp update \
-          --name kids-bible-frontend \
-          --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-          --image ${{ env.REGISTRY }}/${{ github.repository }}/frontend:${{ github.sha }}
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Run Database Migrations
-      run: |
-        az containerapp exec \
-          --name kids-bible-backend \
-          --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-          --command "alembic upgrade head"
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Frontend
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+
+      - name: Sync to S3
+        run: |
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
+
+      - name: Invalidate CloudFront (Optional)
+        if: secrets.CLOUDFRONT_DISTRIBUTION_ID != ''
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"

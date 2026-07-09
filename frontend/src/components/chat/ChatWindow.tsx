@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { chatAPI } from '../../lib/api';
-import { Send, Flag, Trash2, User, MoreVertical } from 'lucide-react';
+import { Send, Flag, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ChatWindowProps {
@@ -10,12 +10,14 @@ interface ChatWindowProps {
   isStudent: boolean; // True if current user is student
   theme?: any; // Theme object for styling
   isReadOnly?: boolean; // For parent monitoring
+  canModerate?: boolean;
 }
 
-export default function ChatWindow({ groupId, currentUserId, isStudent, theme, isReadOnly = false }: ChatWindowProps) {
+export default function ChatWindow({ groupId, currentUserId, isStudent, theme, isReadOnly = false, canModerate = false }: ChatWindowProps) {
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const useStudentAuth = isStudent && !isReadOnly;
 
   // Default theme fallback
   const currentTheme = theme || {
@@ -29,7 +31,11 @@ export default function ChatWindow({ groupId, currentUserId, isStudent, theme, i
 
   const { data: messages, isLoading } = useQuery({
     queryKey: ['messages', groupId],
-    queryFn: () => chatAPI.getGroupMessages(groupId).then((res) => res.data.reverse()), // Reverse to show oldest first at top
+    queryFn: () => (
+      useStudentAuth
+        ? chatAPI.getStudentGroupMessages(groupId)
+        : chatAPI.getGroupMessages(groupId)
+    ).then((res) => res.data.reverse()), // Reverse to show oldest first at top
     refetchInterval: 3000, // Poll every 3 seconds for new messages
   });
 
@@ -40,12 +46,34 @@ export default function ChatWindow({ groupId, currentUserId, isStudent, theme, i
         content: content,
         message_type: 'text',
       };
-      return isStudent 
+      return useStudentAuth 
         ? chatAPI.sendStudentMessage(data)
         : chatAPI.sendMessage(data);
     },
     onSuccess: () => {
       setMessage('');
+      queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
+    },
+  });
+
+  const deleteMessageMutation = useMutation({
+    mutationFn: (messageId: number) => (
+      useStudentAuth
+        ? chatAPI.deleteStudentMessage(messageId)
+        : chatAPI.deleteMessage(messageId)
+    ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
+    },
+  });
+
+  const flagMessageMutation = useMutation({
+    mutationFn: (messageId: number) => (
+      useStudentAuth
+        ? chatAPI.flagStudentMessage(messageId)
+        : chatAPI.flagMessage(messageId)
+    ),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
     },
   });
@@ -81,6 +109,7 @@ export default function ChatWindow({ groupId, currentUserId, isStudent, theme, i
           const isMe = isStudent 
             ? msg.student_sender_id === currentUserId
             : msg.sender_id === currentUserId;
+          const canDelete = !isReadOnly && (isMe || canModerate);
             
           return (
             <div
@@ -112,6 +141,26 @@ export default function ChatWindow({ groupId, currentUserId, isStudent, theme, i
                   </span>
                   {msg.is_flagged && (
                     <Flag className="w-3 h-3 text-red-500" />
+                  )}
+                  {!isReadOnly && !msg.is_flagged && (
+                    <button
+                      type="button"
+                      onClick={() => flagMessageMutation.mutate(msg.id)}
+                      className="text-gray-300 hover:text-red-500 transition-colors"
+                      title="Flag message"
+                    >
+                      <Flag className="w-3 h-3" />
+                    </button>
+                  )}
+                  {canDelete && (
+                    <button
+                      type="button"
+                      onClick={() => deleteMessageMutation.mutate(msg.id)}
+                      className="text-gray-300 hover:text-red-500 transition-colors"
+                      title="Delete message"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
                   )}
                 </div>
               </div>

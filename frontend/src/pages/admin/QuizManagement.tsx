@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { quizAPI, lessonAPI } from '../../lib/api';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, Award, BookOpen } from 'lucide-react';
+import { Plus, Edit, Trash2, Award } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
 
 export default function QuizManagement() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [questionCount, setQuestionCount] = useState(1);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -27,15 +28,13 @@ export default function QuizManagement() {
     },
   });
 
-  // Since we don't have a list all quizzes endpoint yet, we'll fetch lessons first then quizzes
-  // For now, let's just show a placeholder or implement the create modal
-  
   const createQuiz = useMutation({
     mutationFn: (data: any) => quizAPI.createQuiz(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quizzes'] });
       toast.success('Quiz created successfully');
       setShowCreateModal(false);
+      setQuestionCount(1);
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.detail || 'Failed to create quiz');
@@ -51,8 +50,29 @@ export default function QuizManagement() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
-    // Basic quiz data structure - in a real app this would be more complex
-    // with dynamic question adding
+    const questions = Array.from({ length: questionCount }, (_, index) => {
+      const optionA = String(formData.get(`question_${index}_option_a`) || '').trim();
+      const optionB = String(formData.get(`question_${index}_option_b`) || '').trim();
+      const optionC = String(formData.get(`question_${index}_option_c`) || '').trim();
+      const optionD = String(formData.get(`question_${index}_option_d`) || '').trim();
+      const options = [
+        { id: 'a', text: optionA },
+        { id: 'b', text: optionB },
+        ...(optionC ? [{ id: 'c', text: optionC }] : []),
+        ...(optionD ? [{ id: 'd', text: optionD }] : []),
+      ];
+
+      return {
+        question_type: 'multiple_choice',
+        question_text: formData.get(`question_${index}_text`),
+        options,
+        correct_answer: formData.get(`question_${index}_correct`),
+        points: Number(formData.get(`question_${index}_points`) || 1),
+        order_index: index + 1,
+        explanation: formData.get(`question_${index}_explanation`) || null,
+      };
+    });
+
     const data = {
       title: formData.get('title'),
       description: formData.get('description'),
@@ -60,7 +80,7 @@ export default function QuizManagement() {
       passing_score: Number(formData.get('passing_score')),
       max_attempts: Number(formData.get('max_attempts')),
       is_active: formData.get('is_active') === 'on',
-      questions: [], // Questions would be added here in a full implementation
+      questions,
     };
 
     createQuiz.mutate(data);
@@ -161,10 +181,93 @@ export default function QuizManagement() {
                 </label>
               </div>
 
-              <div className="bg-yellow-50 p-4 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  Note: Adding questions is not yet supported in this quick view. Please create the quiz first, then add questions.
-                </p>
+              <div className="border-t pt-6 space-y-5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Questions</h3>
+                  <button
+                    type="button"
+                    onClick={() => setQuestionCount((count) => count + 1)}
+                    className="text-sm bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200"
+                  >
+                    Add Question
+                  </button>
+                </div>
+
+                {Array.from({ length: questionCount }, (_, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-gray-900">Question {index + 1}</h4>
+                      {questionCount > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setQuestionCount((count) => Math.max(1, count - 1))}
+                          className="text-sm text-red-600 hover:text-red-700"
+                        >
+                          Remove Last
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Prompt</label>
+                      <textarea
+                        name={`question_${index}_text`}
+                        required
+                        rows={2}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {['a', 'b', 'c', 'd'].map((option) => (
+                        <div key={option}>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Option {option.toUpperCase()}{option === 'a' || option === 'b' ? '' : ' (Optional)'}
+                          </label>
+                          <input
+                            name={`question_${index}_option_${option}`}
+                            required={option === 'a' || option === 'b'}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Correct Answer</label>
+                        <select
+                          name={`question_${index}_correct`}
+                          required
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        >
+                          <option value="a">A</option>
+                          <option value="b">B</option>
+                          <option value="c">C</option>
+                          <option value="d">D</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Points</label>
+                        <input
+                          name={`question_${index}_points`}
+                          type="number"
+                          min="1"
+                          defaultValue={1}
+                          required
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Feedback</label>
+                        <input
+                          name={`question_${index}_explanation`}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="flex justify-end space-x-4 pt-4">

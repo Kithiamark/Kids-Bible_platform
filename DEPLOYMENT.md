@@ -1,100 +1,167 @@
-# Deployment Guide for Azure (Free Tier)
+# Deployment Guide
 
-This guide outlines how to deploy the Kids Delight Platform to Azure, leveraging their free tier offerings where possible.
+This project now recommends a split free-hosting setup:
 
-## 1. Prerequisites
+- Frontend: Netlify or Vercel
+- Backend API: Koyeb
+- Database: PostgreSQL hosted on an Oracle Cloud Always Free VM
 
-- **Azure Account**: Sign up for a free account.
-- **Azure CLI**: Installed on your local machine.
-- **Docker**: Installed locally.
+This keeps the frontend static, keeps the backend easy to deploy, and avoids rewriting the app for Oracle Database.
 
-## 2. Infrastructure Overview
+## Architecture
 
-We will use:
-- **Azure App Service (Free Tier F1)**: For hosting the Backend API and Frontend (Dockerized).
-  - *Note: F1 tier is shared infrastructure. For production with custom domains and SSL, you might eventually upgrade to Basic (B1).*
-- **Azure Database for PostgreSQL (Flexible Server)**:
-  - Azure offers a "Free Trial" for 12 months for Flexible Server with burstable compute (B1ms), 32GB storage.
-  - *Alternative*: If the managed service is too expensive after the trial, you can run a PostgreSQL container alongside your app in a Container Group or VM (B1s), but managed is recommended for data safety.
-
-## 3. Deployment Steps
-
-### Step A: Container Registry (ACR)
-
-1.  **Create an Azure Container Registry (Basic Tier)**.
-    ```bash
-    az acr create --resource-group myResourceGroup --name kidsbibleacr --sku Basic
-    ```
-2.  **Login to ACR**:
-    ```bash
-    az acr login --name kidsbibleacr
-    ```
-
-### Step B: Build and Push Images
-
-1.  **Backend**:
-    ```bash
-    docker build -t kidsbibleacr.azurecr.io/backend:latest ./backend
-    docker push kidsbibleacr.azurecr.io/backend:latest
-    ```
-2.  **Frontend**:
-    ```bash
-    docker build -t kidsbibleacr.azurecr.io/frontend:latest ./frontend
-    docker push kidsbibleacr.azurecr.io/frontend:latest
-    ```
-
-### Step C: Database Setup
-
-1.  Create an **Azure Database for PostgreSQL - Flexible Server**.
-    - **Compute**: Burstable, B1ms (Free tier eligible for 12 months).
-    - **Storage**: 32 GB.
-    - **Networking**: Allow public access from Azure services (checkbox).
-2.  Note down the `Connection String` parameters: `host`, `user`, `password`, `database`.
-
-### Step D: Backend Deployment (App Service)
-
-1.  Create a **Web App for Containers** (Linux).
-2.  **Plan**: Select Free (F1) or Basic (B1).
-3.  **Container Settings**:
-    - Image Source: Azure Container Registry.
-    - Image: `backend:latest`.
-4.  **Environment Variables** (Configuration -> Application Settings):
-    - `DATABASE_URL`: `postgresql://user:password@host:5432/dbname?sslmode=require`
-    - `SECRET_KEY`: *<your-secure-random-string>*
-    - `ENVIRONMENT`: `production`
-    - `CORS_ORIGINS`: *<url-of-your-frontend-app-service>*
-5.  **Startup Command**: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
-
-### Step E: Frontend Deployment (App Service)
-
-1.  Create another **Web App for Containers** (or use Static Web Apps).
-    - *Static Web Apps* is actually better/cheaper for the frontend (free tier available).
-    - If using App Service:
-        - Image: `frontend:latest`.
-        - **Port**: 80.
-2.  **Configuration**:
-    - If you hardcoded the API URL in the frontend build, you might need to rebuild the image with `VITE_API_URL` set to your backend's URL.
-    - *Better approach*: Use Nginx in the frontend container to proxy `/api` requests to the backend, or set the API URL in the client side code to point to the backend App Service URL.
-
-## 4. Cost Optimization Tips
-
-- **Database**: The managed PostgreSQL is the most expensive part after the free trial.
-  - *Cheapest option*: Use an **Azure VM (B1s - ~$8/month)** and run both Docker containers (App + DB) via `docker-compose` on that single VM.
-  - *Setup*:
-    1.  Create Ubuntu VM (B1s).
-    2.  SSH into VM.
-    3.  Install Docker & Docker Compose.
-    4.  Copy `docker-compose.yml` to VM.
-    5.  Run `docker-compose up -d`.
-    6.  Open port 80 (Frontend) and 8000 (Backend) in Azure Network Security Group.
-
-## 5. Local Testing
-
-To test everything locally before deploying:
-```bash
-docker-compose up --build
+```mermaid
+flowchart LR
+  Browser[Browser] --> FE[Netlify or Vercel]
+  FE -->|HTTPS /api calls| API[Koyeb FastAPI Service]
+  API -->|DATABASE_URL| DB[(PostgreSQL on Oracle Cloud VM)]
 ```
-This will start:
-- Frontend at `http://localhost:5173`
-- Backend at `http://localhost:8000`
-- Database on port 5432
+
+## Prerequisites
+
+- Netlify account or Vercel account
+- Koyeb account
+- Oracle Cloud account with Always Free compute access
+- GitHub repository for deployments
+- Docker installed locally for backend/local validation
+
+## Environment Variables
+
+### Frontend
+
+Set in Netlify or Vercel:
+
+- `VITE_API_BASE_URL=https://your-koyeb-service.koyeb.app/api/v1`
+
+Reference:
+- [frontend/.env.example](file:///c:/Users/USER/Project/Kids-Bible_platform/frontend/.env.example)
+
+### Backend
+
+Set in Koyeb:
+
+- `DATABASE_URL=postgresql+psycopg2://kids_user:strong_password@your-oracle-vm-public-ip:5432/kids_bible_db`
+- `SECRET_KEY=<strong-random-secret>`
+- `ENVIRONMENT=production`
+- `CORS_ORIGINS=https://your-netlify-site.netlify.app,https://your-vercel-site.vercel.app`
+- `ALLOWED_HOSTS=your-koyeb-service.koyeb.app`
+
+Reference:
+- [backend/.env.example](file:///c:/Users/USER/Project/Kids-Bible_platform/backend/.env.example)
+
+## Frontend Deployment
+
+### Option A: Netlify
+
+This repo includes a root [netlify.toml](file:///c:/Users/USER/Project/Kids-Bible_platform/netlify.toml) that:
+
+- builds from `frontend/`
+- runs `npm run build`
+- publishes `frontend/dist`
+- rewrites all SPA paths to `index.html`
+
+The frontend also keeps the SPA redirect file:
+- [frontend/public/_redirects](file:///c:/Users/USER/Project/Kids-Bible_platform/frontend/public/_redirects)
+
+Netlify steps:
+
+1. Connect the GitHub repository.
+2. Confirm the build settings from `netlify.toml`.
+3. Set `VITE_API_BASE_URL`.
+4. Deploy.
+
+### Option B: Vercel
+
+This repo includes a root [vercel.json](file:///c:/Users/USER/Project/Kids-Bible_platform/vercel.json) that:
+
+- builds the frontend from the monorepo root
+- outputs `frontend/dist`
+- rewrites SPA routes to `index.html`
+
+Vercel steps:
+
+1. Import the repository.
+2. Confirm the custom build behavior from `vercel.json`.
+3. Set `VITE_API_BASE_URL`.
+4. Deploy.
+
+## Backend Deployment on Koyeb
+
+The backend is already container-ready via:
+- [backend/Dockerfile](file:///c:/Users/USER/Project/Kids-Bible_platform/backend/Dockerfile)
+
+Recommended Koyeb setup:
+
+1. Create a new Web Service from the GitHub repository or from the backend Docker image.
+2. Point the service at the `backend/` directory if using repo-based Docker build.
+3. Use the existing Docker startup command:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+4. Set all backend environment variables.
+5. Configure an HTTP health check to:
+
+```text
+/health
+```
+
+6. Deploy and verify:
+- `https://your-koyeb-service.koyeb.app/health`
+- `https://your-koyeb-service.koyeb.app/api/docs`
+
+## PostgreSQL on Oracle Cloud Always Free
+
+The application stays on PostgreSQL. Oracle Cloud is only the host infrastructure.
+
+### Recommended VM Flow
+
+1. Create an Always Free VM.
+2. Assign a public IP.
+3. Open the PostgreSQL port only if you must, and restrict ingress as much as possible.
+4. Install PostgreSQL directly on the VM or run it in Docker.
+5. Create:
+- a database, for example `kids_bible_db`
+- an application user, for example `kids_user`
+- a strong password
+6. Update PostgreSQL config so the Koyeb backend can connect.
+7. Use the resulting connection string as `DATABASE_URL`.
+
+### Migration Flow
+
+After the Koyeb service is configured with the right `DATABASE_URL`, run:
+
+```bash
+alembic upgrade head
+```
+
+You can do this from a one-off shell in the backend environment or from a trusted machine with the same environment values set.
+
+## Local Development
+
+Local development still uses the existing Docker/local setup:
+
+```bash
+docker-compose up -d
+docker-compose exec backend alembic upgrade head
+```
+
+This remains the easiest local path even though production is split.
+
+## Verification Checklist
+
+- Frontend build succeeds
+- Frontend nested routes work after deployment
+- Backend responds on `/health`
+- Backend CORS accepts the deployed frontend origin
+- Backend connects to Oracle-hosted PostgreSQL
+- Migrations run successfully
+- Login flow works end to end
+- Lesson loading works end to end
+- Quiz submission works end to end
+
+## Notes
+
+- `deploy/aws-free-tier.md` is now a legacy alternative, not the recommended path.
+- The recommended free-tier path for this repo is Netlify/Vercel + Koyeb + PostgreSQL on Oracle Cloud infrastructure.

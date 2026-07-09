@@ -12,6 +12,56 @@ from app.schemas.chat import GroupCreate, GroupUpdate, GroupResponse, GroupMembe
 router = APIRouter()
 
 
+def build_group_response(db: Session, group: Group) -> GroupResponse:
+    member_count = db.query(func.count(GroupMembership.id)).filter(
+        GroupMembership.group_id == group.id,
+        GroupMembership.is_active == True
+    ).scalar()
+
+    group_response = GroupResponse(**group.__dict__)
+    group_response.member_count = member_count or 0
+    return group_response
+
+
+def can_user_access_group(db: Session, group_id: int, user: User) -> bool:
+    if user.role.value in ["admin", "teacher"]:
+        return True
+    user_membership = db.query(GroupMembership).filter(
+        GroupMembership.group_id == group_id,
+        GroupMembership.user_id == user.id,
+        GroupMembership.is_active == True
+    ).first()
+    if user_membership:
+        return True
+    child_membership = db.query(GroupMembership).join(Student).filter(
+        GroupMembership.group_id == group_id,
+        GroupMembership.student_id == Student.id,
+        Student.parent_id == user.id,
+        GroupMembership.is_active == True
+    ).first()
+    return child_membership is not None
+
+
+def build_membership_response(db: Session, membership: GroupMembership) -> GroupMembershipResponse:
+    response = GroupMembershipResponse.model_validate(membership)
+    if membership.student_id:
+        student = db.query(Student).filter(Student.id == membership.student_id).first()
+        if student:
+            response.member_type = "student"
+            response.display_name = student.display_name
+            response.username = student.username
+            response.avatar_url = student.avatar_url
+            response.age_group = student.age_group.value
+    elif membership.user_id:
+        user = db.query(User).filter(User.id == membership.user_id).first()
+        if user:
+            response.member_type = "user"
+            response.display_name = user.full_name
+            response.username = user.email
+            response.role = user.role.value
+    return response
+
+
 @router.post("/direct/student", response_model=GroupResponse)
 def create_student_direct_chat(
     chat_data: DirectChatCreate,
@@ -25,6 +75,8 @@ def create_student_direct_chat(
     target_student = db.query(Student).filter(Student.id == chat_data.target_student_id).first()
     if not target_student:
         raise HTTPException(status_code=404, detail="Target student not found")
+    if target_student.age_group != current_student.age_group:
+        raise HTTPException(status_code=403, detail="Can only chat with students in your age group")
         
     # Check if direct group already exists
     # Complex query: find group where both students are members and type is DIRECT
@@ -35,7 +87,7 @@ def create_student_direct_chat(
     my_groups = db.query(GroupMembership.group_id).filter(
         GroupMembership.student_id == current_student.id,
         GroupMembership.is_active == True
-    ).subquery()
+    ).scalar_subquery()
     
     # Find shared group with target_student that is DIRECT
     shared_group = db.query(Group).join(GroupMembership).filter(
@@ -52,11 +104,7 @@ def create_student_direct_chat(
     group = Group(
         name=f"{current_student.display_name} & {target_student.display_name}",
         group_type=GroupType.DIRECT,
-        created_by=target_student.parent_id, # Placeholder: Created by parent of target or system? 
-        # Actually created_by refers to User. Student doesn't map to User directly. 
-        # Let's use current_student's parent for now or make created_by nullable?
-        # Model says created_by is NOT NULL. 
-        # So we use current_student.parent_id
+        created_by=current_student.parent_id,
     )
     db.add(group)
     db.commit()
@@ -82,12 +130,14 @@ def create_user_direct_chat(
         target_user = db.query(User).filter(User.id == chat_data.target_user_id).first()
         if not target_user:
             raise HTTPException(status_code=404, detail="Target user not found")
+        if current_user.role.value == "parent" and target_user.role.value not in ["admin", "teacher"]:
+            raise HTTPException(status_code=403, detail="Parents can only start direct chats with staff")
             
         # Check existing
         my_groups = db.query(GroupMembership.group_id).filter(
             GroupMembership.user_id == current_user.id,
             GroupMembership.is_active == True
-        ).subquery()
+        ).scalar_subquery()
         
         shared_group = db.query(Group).join(GroupMembership).filter(
             Group.id.in_(my_groups),
@@ -116,6 +166,8 @@ def create_user_direct_chat(
 
     # Scenario 2: User to Student (Teacher <-> Student)
     if chat_data.target_student_id:
+        if current_user.role.value not in ["admin", "teacher"]:
+            raise HTTPException(status_code=403, detail="Only staff can start direct chats with students")
         target_student = db.query(Student).filter(Student.id == chat_data.target_student_id).first()
         if not target_student:
             raise HTTPException(status_code=404, detail="Target student not found")
@@ -123,7 +175,7 @@ def create_user_direct_chat(
         my_groups = db.query(GroupMembership.group_id).filter(
             GroupMembership.user_id == current_user.id,
             GroupMembership.is_active == True
-        ).subquery()
+        ).scalar_subquery()
         
         shared_group = db.query(Group).join(GroupMembership).filter(
             Group.id.in_(my_groups),
@@ -184,23 +236,44 @@ def list_groups(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """List all groups."""
+    """List groups visible to the current user."""
     query = db.query(Group).filter(Group.is_active == True)
-    groups = query.offset(skip).limit(limit).all()
-    
-    # Add member counts
-    result = []
-    for group in groups:
-        member_count = db.query(func.count(GroupMembership.id)).filter(
-            GroupMembership.group_id == group.id,
+
+    if current_user.role.value not in ["admin", "teacher"]:
+        user_group_ids = db.query(GroupMembership.group_id).filter(
+            GroupMembership.user_id == current_user.id,
             GroupMembership.is_active == True
-        ).scalar()
-        
-        group_response = GroupResponse(**group.__dict__)
-        group_response.member_count = member_count
-        result.append(group_response)
-    
-    return result
+        )
+        child_group_ids = db.query(GroupMembership.group_id).join(Student).filter(
+            GroupMembership.student_id == Student.id,
+            Student.parent_id == current_user.id,
+            GroupMembership.is_active == True
+        )
+        query = query.filter(
+            Group.id.in_(user_group_ids)
+            | Group.id.in_(child_group_ids)
+        )
+
+    groups = query.offset(skip).limit(limit).all()
+    return [build_group_response(db, group) for group in groups]
+
+
+@router.get("/me", response_model=List[GroupResponse])
+def list_my_groups(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get direct/group chats where the current user is an active member."""
+    memberships = db.query(GroupMembership).filter(
+        GroupMembership.user_id == current_user.id,
+        GroupMembership.is_active == True
+    ).all()
+
+    groups = [
+        db.query(Group).filter(Group.id == membership.group_id, Group.is_active == True).first()
+        for membership in memberships
+    ]
+    return [build_group_response(db, group) for group in groups if group]
 
 
 @router.get("/student", response_model=List[GroupResponse])
@@ -230,6 +303,36 @@ def list_student_groups(
     return result
 
 
+@router.get("/student/{student_id}", response_model=List[GroupResponse])
+def list_groups_for_student(
+    student_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get a student's groups for their parent or staff."""
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    can_view = (
+        current_user.role.value in ["admin", "teacher"]
+        or student.parent_id == current_user.id
+    )
+    if not can_view:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    memberships = db.query(GroupMembership).filter(
+        GroupMembership.student_id == student_id,
+        GroupMembership.is_active == True
+    ).all()
+
+    groups = [
+        db.query(Group).filter(Group.id == membership.group_id, Group.is_active == True).first()
+        for membership in memberships
+    ]
+    return [build_group_response(db, group) for group in groups if group]
+
+
 @router.get("/{group_id}/members", response_model=List[GroupMembershipResponse])
 def list_group_members(
     group_id: int,
@@ -241,7 +344,7 @@ def list_group_members(
         GroupMembership.group_id == group_id,
         GroupMembership.is_active == True
     ).all()
-    return memberships
+    return [build_membership_response(db, membership) for membership in memberships]
 
 
 @router.post("/{group_id}/members")
@@ -252,6 +355,15 @@ def add_group_member(
     db: Session = Depends(get_db)
 ):
     """Add a student to a group (teacher/admin only)."""
+    if membership_data.student_id is None:
+        raise HTTPException(status_code=400, detail="Student ID required")
+    group = db.query(Group).filter(Group.id == group_id, Group.is_active == True).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    student = db.query(Student).filter(Student.id == membership_data.student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
     # Check if already a member
     existing = db.query(GroupMembership).filter(
         GroupMembership.group_id == group_id,
@@ -306,6 +418,8 @@ def get_group(
     group = db.query(Group).filter(Group.id == group_id).first()
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
+    if not can_user_access_group(db, group_id, current_user):
+        raise HTTPException(status_code=403, detail="Not authorized")
     
     member_count = db.query(func.count(GroupMembership.id)).filter(
         GroupMembership.group_id == group.id,

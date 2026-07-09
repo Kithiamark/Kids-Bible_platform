@@ -54,7 +54,7 @@ A production-ready, full-stack web application for children's Bible education fe
 - ✅ SQL injection prevention (ORM)
 - ✅ CORS configuration
 - ✅ Password strength requirements
-- ✅ Azure encryption at rest support
+- ✅ Compatible with encrypted-at-rest cloud or disk-backed database hosting
 
 ### 2. Frontend (React/TypeScript) ✓
 
@@ -127,12 +127,13 @@ A production-ready, full-stack web application for children's Bible education fe
 - ✅ Redis container (optional)
 - ✅ Health checks on all containers
 
-#### Azure Deployment
-- ✅ Azure Container Apps configuration
-- ✅ Azure PostgreSQL setup guide
+#### Deployment
+- ✅ Netlify/Vercel frontend hosting guidance
+- ✅ Koyeb backend hosting guidance
+- ✅ PostgreSQL on Oracle Cloud VM deployment guidance
 - ✅ GitHub Actions CI/CD workflow
 - ✅ Environment variable templates
-- ✅ Kubernetes deployment files
+- ✅ Legacy Kubernetes deployment files
 
 #### Deployment Features
 - ✅ Auto-scaling configuration
@@ -253,7 +254,7 @@ kids-bible-platform/
 
 ### Backend
 - **Framework**: FastAPI 0.115.0
-- **Database**: PostgreSQL 16 (Azure)
+- **Database**: PostgreSQL 16
 - **ORM**: SQLAlchemy 2.0.36
 - **Migrations**: Alembic 1.14.0
 - **Auth**: python-jose, passlib
@@ -275,7 +276,7 @@ kids-bible-platform/
 ### Infrastructure
 - **Container**: Docker
 - **Orchestration**: Docker Compose / Kubernetes
-- **Cloud**: Azure (Container Apps, PostgreSQL, Blob Storage)
+- **Cloud**: Netlify or Vercel + Koyeb + Oracle Cloud infrastructure for PostgreSQL
 - **CI/CD**: GitHub Actions
 - **Web Server**: Nginx (frontend)
 
@@ -408,14 +409,11 @@ docker-compose logs -f
 
 ### Production
 ```bash
-# View Azure logs
-az containerapp logs show --name kids-bible-backend
-
-# Scale application
-az containerapp update --min-replicas 2 --max-replicas 10
+# View backend logs
+# Use the Koyeb dashboard or koyeb CLI for service logs
 
 # Database backup
-az postgres flexible-server backup create
+# Use pg_dump or VM-level backups on the Oracle Cloud PostgreSQL host
 ```
 
 ## 🏆 Project Achievements
@@ -424,7 +422,7 @@ az postgres flexible-server backup create
 ✅ **Production-Ready**: Security, scaling, monitoring
 ✅ **Well-Documented**: Comprehensive documentation
 ✅ **Tested**: Unit and integration tests
-✅ **Deployable**: Docker + Azure ready
+✅ **Deployable**: Docker + split free-hosting ready
 ✅ **Modern Stack**: Latest technologies
 ✅ **Best Practices**: Clean code, proper architecture
 ✅ **User-Friendly**: Intuitive interfaces for all user types

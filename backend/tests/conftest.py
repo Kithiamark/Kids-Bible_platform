@@ -76,6 +76,22 @@ def test_admin(db):
 
 
 @pytest.fixture
+def test_teacher(db):
+    """Create a test teacher user."""
+    teacher = User(
+        email="teacher@example.com",
+        hashed_password=get_password_hash("teacherpassword"),
+        full_name="Teacher User",
+        role=UserRole.TEACHER,
+        is_active=True
+    )
+    db.add(teacher)
+    db.commit()
+    db.refresh(teacher)
+    return teacher
+
+
+@pytest.fixture
 def auth_headers(client, test_user):
     """Get authentication headers for test user."""
     response = client.post(
@@ -92,6 +108,17 @@ def admin_headers(client, test_admin):
     response = client.post(
         "/api/v1/auth/login",
         json={"email": "admin@example.com", "password": "adminpassword"}
+    )
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def teacher_headers(client, test_teacher):
+    """Get authentication headers for teacher user."""
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "teacher@example.com", "password": "teacherpassword"}
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}

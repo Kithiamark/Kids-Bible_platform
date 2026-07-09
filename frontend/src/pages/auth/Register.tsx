@@ -78,20 +78,6 @@ export default function Register() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              I am a
-            </label>
-            <select
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            >
-              <option value="parent">Parent</option>
-              <option value="teacher">Teacher</option>
-            </select>
-          </div>
-
           <button
             type="submit"
             disabled={loading}

@@ -36,8 +36,14 @@ def create_student(
     db: Session = Depends(get_db)
 ):
     """Create a new student profile (parent/admin only)."""
-    # Verify parent_id matches current user or current user is admin
-    if student_data.parent_id != current_user.id and current_user.role.value != "admin":
+    parent_id = student_data.parent_id
+    if current_user.role.value == "parent":
+        parent_id = current_user.id
+    elif parent_id is None:
+        raise HTTPException(status_code=400, detail="Parent ID is required")
+
+    # Verify parent_id matches current user or current user is admin/teacher
+    if parent_id != current_user.id and current_user.role.value not in ["admin", "teacher"]:
         raise HTTPException(status_code=403, detail="Can only create students for yourself")
     
     # Check if username is unique
@@ -45,7 +51,7 @@ def create_student(
     if existing:
         raise HTTPException(status_code=400, detail="Username already taken")
     
-    student = Student(**student_data.model_dump())
+    student = Student(**student_data.model_dump(exclude={"parent_id"}), parent_id=parent_id)
     db.add(student)
     db.commit()
     db.refresh(student)

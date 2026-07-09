@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 from datetime import datetime
 from app.models.chat import MessageType
@@ -7,9 +7,9 @@ from app.models.student import AgeGroup
 
 
 class MessageBase(BaseModel):
-    content: str
+    content: str = Field(..., min_length=1, max_length=2000)
     message_type: MessageType = MessageType.TEXT
-    extra_data: Optional[str] = None
+    extra_data: Optional[str] = Field(default=None, max_length=4000)
 
 
 class MessageCreate(MessageBase):
@@ -31,6 +31,11 @@ class MessageResponse(MessageBase):
     sender_avatar: Optional[str] = None
     
     model_config = ConfigDict(from_attributes=True)
+
+
+class MessageModerationUpdate(BaseModel):
+    is_flagged: Optional[bool] = None
+    is_moderated: Optional[bool] = None
 
 
 class GroupBase(BaseModel):
@@ -64,7 +69,7 @@ class GroupResponse(GroupBase):
 class GroupMembershipCreate(BaseModel):
     student_id: Optional[int] = None
     user_id: Optional[int] = None
-    group_id: int
+    group_id: Optional[int] = None
 
 
 class GroupMembershipResponse(BaseModel):
@@ -74,6 +79,12 @@ class GroupMembershipResponse(BaseModel):
     user_id: Optional[int] = None
     joined_at: datetime
     is_active: bool
+    member_type: Optional[str] = None
+    display_name: Optional[str] = None
+    username: Optional[str] = None
+    role: Optional[str] = None
+    avatar_url: Optional[str] = None
+    age_group: Optional[str] = None
     
     model_config = ConfigDict(from_attributes=True)
 

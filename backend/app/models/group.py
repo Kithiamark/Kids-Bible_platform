@@ -1,9 +1,10 @@
 import enum
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Boolean, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 from app.models.student import AgeGroup
+from app.models.types import value_enum
 
 
 class GroupType(str, enum.Enum):
@@ -19,8 +20,8 @@ class Group(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
-    group_type = Column(SQLEnum(GroupType), nullable=False)
-    age_group = Column(SQLEnum(AgeGroup), nullable=True)
+    group_type = Column(value_enum(GroupType, "grouptype"), nullable=False)
+    age_group = Column(value_enum(AgeGroup, "agegroup"), nullable=True)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

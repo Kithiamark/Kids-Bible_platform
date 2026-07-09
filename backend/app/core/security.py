@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+import logging
 from typing import Optional, Union
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -12,6 +13,7 @@ from app.models.student import Student
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/api/{settings.api_version}/auth/login")
+logger = logging.getLogger(__name__)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -31,9 +33,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
         to_encode["sub"] = str(to_encode["sub"])
         
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
+        expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
     
     to_encode.update({"exp": expire, "type": "access"})
     encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
@@ -46,7 +48,7 @@ def create_refresh_token(data: dict) -> str:
     if "sub" in to_encode:
         to_encode["sub"] = str(to_encode["sub"])
 
-    expire = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
+    expire = datetime.now(UTC) + timedelta(days=settings.refresh_token_expire_days)
     to_encode.update({"exp": expire, "type": "refresh"})
     encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
@@ -58,7 +60,7 @@ def decode_token(token: str) -> dict:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         return payload
     except JWTError as e:
-        print(f"JWT Decode Error: {e}")
+        logger.warning("JWT decode failed: %s", e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"JWT Error: {str(e)}",
@@ -79,29 +81,34 @@ async def get_current_user(
     
     try:
         payload = decode_token(token)
+        if payload.get("student_id") is not None or payload.get("role") == UserRole.STUDENT.value:
+            raise credentials_exception
+
         user_id = payload.get("sub")
         if user_id is None:
-            print("User ID missing in token payload")
+            logger.warning("User ID missing in token payload")
             raise credentials_exception
         
         try:
             user_id = int(user_id)
         except (ValueError, TypeError):
-            print(f"Invalid user_id format: {user_id}")
+            logger.warning("Invalid user_id format: %s", user_id)
             raise credentials_exception
 
         user = db.query(User).filter(User.id == user_id).first()
         if user is None:
-            print(f"User {user_id} not found in DB")
+            logger.warning("User %s not found in DB", user_id)
             raise credentials_exception
             
         if not user.is_active:
-            print(f"User {user_id} is inactive")
+            logger.warning("User %s is inactive", user_id)
             raise credentials_exception
         
         return user
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Auth Error: {e}")
+        logger.warning("Authentication failed: %s", e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Auth Error: {str(e)}",

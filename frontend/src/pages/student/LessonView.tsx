@@ -12,16 +12,16 @@ export default function LessonView() {
 
   const { data: lesson, isLoading } = useQuery({
     queryKey: ['lesson', id],
-    queryFn: () => lessonAPI.getLesson(Number(id)).then((res) => res.data),
+    queryFn: () => lessonAPI.getStudentLesson(Number(id)).then((res) => res.data),
   });
 
   const { data: quizzes } = useQuery({
     queryKey: ['lessonQuizzes', id],
-    queryFn: () => quizAPI.getQuizzesForLesson(Number(id)).then((res) => res.data),
+    queryFn: () => quizAPI.getStudentQuizzesForLesson(Number(id)).then((res) => res.data),
     enabled: !!id,
   });
 
-  const startLesson = useMutation({
+  const { mutate: markLessonStarted } = useMutation({
     mutationFn: () => progressAPI.startLesson(Number(id)),
   });
 
@@ -34,9 +34,9 @@ export default function LessonView() {
 
   useEffect(() => {
     if (lesson) {
-      startLesson.mutate();
+      markLessonStarted();
     }
-  }, [lesson]);
+  }, [lesson, markLessonStarted]);
 
   const handleCompleteLesson = () => {
     updateProgress.mutate({

@@ -197,26 +197,31 @@ export default function GroupManagement() {
                   <div className="flex justify-center py-4">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600"></div>
                   </div>
-                ) : members?.length > 0 ? (
+                ) : (members?.length || 0) > 0 ? (
                   <div className="space-y-2">
-                    {members.map((member: any) => (
+                    {(members || []).map((member: any) => (
                       <div key={member.id} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center text-teal-700 font-bold text-xs">
-                            ID:{member.student_id}
+                            {(member.display_name || 'M').charAt(0)}
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">Student ID: {member.student_id}</p>
-                            <p className="text-xs text-gray-500">Joined: {new Date(member.joined_at).toLocaleDateString()}</p>
+                            <p className="font-medium text-gray-900">{member.display_name || `Member ${member.id}`}</p>
+                            <p className="text-xs text-gray-500">
+                              {member.member_type === 'student' ? `@${member.username} • ${member.age_group?.replace('_', ' ')}` : `${member.role} • ${member.username}`}
+                            </p>
+                            <p className="text-xs text-gray-400">Joined: {new Date(member.joined_at).toLocaleDateString()}</p>
                           </div>
                         </div>
-                        <button
-                          onClick={() => removeMember.mutate({ groupId: managingGroupId, studentId: member.student_id })}
-                          className="text-red-400 hover:text-red-600 p-2"
-                          title="Remove from group"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {member.student_id && (
+                          <button
+                            onClick={() => removeMember.mutate({ groupId: managingGroupId, studentId: member.student_id })}
+                            className="text-red-400 hover:text-red-600 p-2"
+                            title="Remove from group"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>

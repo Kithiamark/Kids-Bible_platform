@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Boolean, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
+from app.models.types import value_enum
 import enum
 
 
@@ -18,7 +19,7 @@ class Message(Base):
     group_id = Column(Integer, ForeignKey("groups.id"), nullable=False)
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Teacher/Admin
     student_sender_id = Column(Integer, ForeignKey("students.id"), nullable=True)  # Student
-    message_type = Column(SQLEnum(MessageType), default=MessageType.TEXT, nullable=False)
+    message_type = Column(value_enum(MessageType, "messagetype"), default=MessageType.TEXT, nullable=False)
     content = Column(Text, nullable=False)
     extra_data = Column(Text, nullable=True)  # JSON string for lesson shares, etc.
     is_moderated = Column(Boolean, default=False, nullable=False)

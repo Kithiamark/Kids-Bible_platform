@@ -1,12 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from contextlib import asynccontextmanager
+from mangum import Mangum
 from app.core.config import settings
 from app.core.database import engine, Base
+from app import models  # noqa: F401 - ensure SQLAlchemy models are registered
 from app.api.v1 import api_router
 
-# Create database tables (for development only, use Alembic in production)
-# Base.metadata.create_all(bind=engine)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize local development storage without bypassing production migrations."""
+    if settings.environment == "development" and settings.database_url.startswith("sqlite"):
+        Base.metadata.create_all(bind=engine)
+    yield
 
 app = FastAPI(
     title=settings.app_name,
@@ -14,7 +22,8 @@ app = FastAPI(
     description="Kids Delight Learning Platform API",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json"
+    openapi_url="/api/openapi.json",
+    lifespan=lifespan,
 )
 
 # CORS Middleware
@@ -42,13 +51,17 @@ else:
 
 # Add security middleware for production
 if settings.environment == "production":
+    allowed_hosts = [host.strip() for host in settings.allowed_hosts.split(",") if host.strip()]
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["*.yourdomain.com", "yourdomain.com"]
+        allowed_hosts=allowed_hosts
     )
 
 # Include API routes
 app.include_router(api_router, prefix=f"/api/{settings.api_version}")
+
+# Create Mangum handler for AWS Lambda
+handler = Mangum(app)
 
 
 @app.get("/")

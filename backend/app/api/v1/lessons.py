@@ -98,6 +98,23 @@ def list_lessons_for_student(
     return result
 
 
+@router.get("/student/{lesson_id}", response_model=LessonResponse)
+def get_lesson_for_student(
+    lesson_id: int,
+    current_student: Student = Depends(get_current_student),
+    db: Session = Depends(get_db)
+):
+    """Get a published lesson available to the current student."""
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    if not lesson.is_published or lesson.age_group != current_student.age_group:
+        raise HTTPException(status_code=403, detail="Lesson not available")
+
+    return lesson
+
+
 @router.get("/{lesson_id}", response_model=LessonResponse)
 def get_lesson(
     lesson_id: int,

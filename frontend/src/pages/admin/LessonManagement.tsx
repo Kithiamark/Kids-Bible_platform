@@ -11,9 +11,6 @@ export default function LessonManagement() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  // Silence unused variable warning until implemented
-  console.log(showCreateModal);
-
   const { data: lessons, isLoading } = useQuery({
     queryKey: ['lessons'],
     queryFn: () => lessonAPI.listLessons({ published_only: false }).then((res) => res.data),

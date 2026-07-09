@@ -360,7 +360,7 @@ docker-compose down -v
 
 ## Production Deployment
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed production deployment instructions to Azure.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the recommended split production deployment to Netlify/Vercel, Koyeb, and PostgreSQL on Oracle Cloud infrastructure.
 
 ## Getting Help
 

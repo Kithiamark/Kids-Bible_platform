@@ -35,6 +35,22 @@ def test_register_duplicate_email(client, test_user):
     assert "already registered" in response.json()["detail"].lower()
 
 
+def test_public_registration_always_creates_parent(client):
+    """Public signup cannot self-promote to teacher/admin."""
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "teacher-self-signup@example.com",
+            "password": "password123",
+            "full_name": "Self Signup",
+            "role": "teacher"
+        }
+    )
+
+    assert response.status_code == 200
+    assert response.json()["role"] == "parent"
+
+
 def test_login_success(client, test_user):
     """Test successful login."""
     response = client.post(

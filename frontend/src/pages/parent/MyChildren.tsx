@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { studentAPI } from '../../lib/api';
-import { User, Award, TrendingUp, ChevronRight, Plus } from 'lucide-react';
+import { progressAPI } from '../../lib/api';
+import { User, Award, TrendingUp, Plus, BookOpen, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
 
 export default function MyChildren() {
-  const { data: students, isLoading } = useQuery({
-    queryKey: ['myStudents'],
-    queryFn: () => studentAPI.getMyStudents().then((res) => res.data),
+  const { data: dashboard, isLoading } = useQuery({
+    queryKey: ['parentDashboardStats'],
+    queryFn: () => progressAPI.getParentDashboardStats().then((res) => res.data),
   });
+  const students = dashboard?.children || [];
 
   if (isLoading) {
     return (
@@ -68,16 +68,20 @@ export default function MyChildren() {
                   </div>
                   <span className="font-bold text-gray-900">{student.total_points} pts</span>
                 </div>
-              </div>
-
-              <div className="border-t pt-4">
-                <button 
-                  onClick={() => toast.success('Detailed progress view coming soon!')}
-                  className="w-full flex items-center justify-center space-x-2 text-teal-600 hover:text-teal-700 font-medium transition-colors"
-                >
-                  <span>View Full Progress</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center text-gray-600">
+                    <BookOpen className="w-4 h-4 mr-2 text-blue-500" />
+                    <span>Lessons Done</span>
+                  </div>
+                  <span className="font-bold text-gray-900">{student.lessons_completed}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center text-gray-600">
+                    <CheckCircle2 className="w-4 h-4 mr-2 text-teal-500" />
+                    <span>Quizzes Passed</span>
+                  </div>
+                  <span className="font-bold text-gray-900">{student.quizzes_passed} / {student.quizzes_attempted}</span>
+                </div>
               </div>
             </div>
           </div>

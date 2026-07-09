@@ -18,7 +18,7 @@ A production-ready web application for children's Bible education with separate 
 - JWT authentication with refresh tokens
 - Role-based access control (RBAC)
 - Input validation and sanitization
-- Azure-managed encryption at rest
+- Cloud-provider or disk-level encryption at rest when configured
 
 ##  Architecture
 
@@ -144,9 +144,17 @@ docker-compose logs -f
 ```
 
 Services:
-- Frontend: `http://localhost:3000`
+- Frontend: `http://localhost:5173`
 - Backend: `http://localhost:8000`
 - Database: `localhost:5432`
+
+### Recommended Free Hosting Deployment
+
+See [DEPLOYMENT.md](file:///c:/Users/USER/Project/Kids-Bible_platform/DEPLOYMENT.md) for the recommended split deployment:
+
+- Frontend on Netlify or Vercel
+- Backend on Koyeb
+- PostgreSQL hosted on Oracle Cloud Always Free infrastructure
 
 ##  Testing
 
@@ -205,7 +213,6 @@ logger = logging.getLogger(__name__)
 
 ### Metrics (Optional)
 Consider adding:
-- Application Insights (Azure)
 - Sentry for error tracking
 - Prometheus for metrics
 
@@ -265,4 +272,4 @@ Consider adding:
 - FastAPI for the excellent web framework
 - React team for the UI library
 - PostgreSQL for robust database
-- Azure for cloud hosting
+- Netlify, Vercel, Koyeb, and Oracle Cloud for free-tier-friendly hosting

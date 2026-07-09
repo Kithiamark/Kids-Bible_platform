@@ -1,13 +1,11 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { groupAPI, chatAPI, userAPI } from '../../lib/api';
+import { useQuery } from '@tanstack/react-query';
+import { groupAPI, userAPI } from '../../lib/api';
 import ChatWindow from '../../components/chat/ChatWindow';
-import { MessageSquare, Users, Hash, Trash2, Flag } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { MessageSquare, Users, Hash } from 'lucide-react';
 
 export default function ChatManagement() {
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
-  const queryClient = useQueryClient();
 
   // Fetch current user for ID
   const { data: user } = useQuery({
@@ -88,6 +86,7 @@ export default function ChatManagement() {
                 groupId={selectedGroupId}
                 currentUserId={user?.id || 0}
                 isStudent={false}
+                canModerate={true}
                 // Teacher Theme
                 theme={{
                   primary: 'bg-teal-600',

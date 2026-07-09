@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { groupAPI, userAPI, authAPI } from '../../lib/api';
+import { groupAPI, userAPI } from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import ChatWindow from '../../components/chat/ChatWindow';
 import { MessageSquare, User, Plus, X } from 'lucide-react';
@@ -12,31 +12,9 @@ export default function ParentMessages() {
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch Parent's Groups (Direct Chats)
-  // We need an endpoint for this. groupAPI.listGroups() returns ALL groups for admin/teacher.
-  // We need groupAPI.getMyGroups() for parents.
-  // Actually listGroups in backend filters by is_active=True but doesn't filter by user.
-  // Wait, backend `list_groups` is for admin.
-  // We need `list_my_groups` for users.
-  // Current `list_student_groups` is for students.
-  // I need to add `GET /groups/my` for generic users (parents/teachers) to see their direct chats.
-  
-  // WORKAROUND: For now, I'll use listGroups but I need to fix the backend to return MY groups.
-  // Let's implement `GET /groups/me` in backend first? 
-  // Or just reuse `listGroups` if I'm admin/teacher, but parent is `UserRole.PARENT`.
-  // `list_groups` requires `get_current_active_user`, so it works for parents, BUT it returns ALL groups.
-  // That's a security issue if parents see all groups.
-  
-  // STOP. I must fix backend `list_groups` or add `list_my_groups`.
-  // `list_groups` docstring says "List all groups".
-  
-  // Let's blindly try to use `listGroups` and see if I can filter client side? NO, security risk.
-  
-  // I will add `GET /groups/me` to backend `groups.py` quickly.
-  
-  const { data: groups, isLoading } = useQuery({
+  const { data: groups } = useQuery({
     queryKey: ['myGroups'],
-    queryFn: () => groupAPI.listGroups().then((res) => res.data), // This needs to be replaced
+    queryFn: () => groupAPI.getMyGroups().then((res) => res.data),
   });
 
   const { data: teachers } = useQuery({

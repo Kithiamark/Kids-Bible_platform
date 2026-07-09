@@ -13,7 +13,9 @@ Welcome! This is your complete guide to navigating the project documentation.
 ### For Developers
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture, data flow, and design decisions
 - **[API.md](API.md)** - Complete API reference with examples
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide (Azure)
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide (Netlify/Vercel + Koyeb + Oracle-hosted PostgreSQL)
+- **[docs/wiki/INDEX.md](docs/wiki/INDEX.md)** - Code Wiki (architecture, module responsibilities, key functions)
+- **[docs/beginner-code-roadmap/START_HERE.md](docs/beginner-code-roadmap/START_HERE.md)** - Beginner learning roadmap for writing clear, structured code
 
 ### Quick References
 - **[SETUP.md](SETUP.md)** - Local development setup (Docker & manual)
@@ -31,6 +33,10 @@ kids-bible-platform/
 ├── 📄 API.md                      ← API documentation
 ├── 📄 DEPLOYMENT.md               ← Deployment guide
 ├── 📄 PROJECT_SUMMARY.md          ← Deliverables checklist
+│
+├── 📚 docs/                       ← Documentation
+│   ├── wiki/                      ← Code Wiki (structured, code-focused)
+│   └── beginner-code-roadmap/     ← Beginner learning path and study guides
 │
 ├── 🐍 backend/                    ← Python/FastAPI backend
 │   ├── app/
@@ -59,7 +65,7 @@ kids-bible-platform/
 ├── 🔧 .env.example                ← Environment template
 │
 └── 📦 deploy/                     ← Deployment configurations
-    └── azure-deploy.yml          ← Kubernetes config
+│   └── azure-deploy.yml          ← Legacy Kubernetes config
 ```
 
 ## 🎯 Documentation by Role
@@ -200,7 +206,10 @@ docker-compose down              # Stop services
 
 ### DevOps
 - Docker: https://docs.docker.com
-- Azure Container Apps: https://learn.microsoft.com/azure/container-apps
+- Netlify Docs: https://docs.netlify.com
+- Vercel Docs: https://vercel.com/docs
+- Koyeb Docs: https://www.koyeb.com/docs
+- Oracle Cloud Free Tier: https://www.oracle.com/cloud/free/
 - PostgreSQL: https://www.postgresql.org/docs
 
 ## 🆘 Getting Help
@@ -240,7 +249,7 @@ Use this to verify you've read the right docs:
 
 **Ready to Deploy:**
 - [ ] Read DEPLOYMENT.md
-- [ ] Configured Azure resources
+- [ ] Configured frontend host, Koyeb backend, and Oracle-hosted PostgreSQL
 - [ ] Set up CI/CD pipeline
 - [ ] Completed security checklist
 

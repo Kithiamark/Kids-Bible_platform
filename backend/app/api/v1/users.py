@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
-from app.core.security import get_current_active_user, require_admin
+from app.core.security import get_current_active_user, require_admin, require_teacher
 from app.models.user import User, UserRole
 from app.schemas.user import UserResponse, UserUpdate
 
@@ -49,10 +49,10 @@ def update_current_user(
 def list_users(
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_teacher),
     db: Session = Depends(get_db)
 ):
-    """List all users (admin only)."""
+    """List all users (teacher/admin only)."""
     users = db.query(User).offset(skip).limit(limit).all()
     return users
 
@@ -60,10 +60,10 @@ def list_users(
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(
     user_id: int,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_teacher),
     db: Session = Depends(get_db)
 ):
-    """Get user by ID (admin only)."""
+    """Get user by ID (teacher/admin only)."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.student import Student
 from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token
 from app.schemas.auth import Token, LoginRequest, StudentLoginRequest
@@ -79,7 +79,7 @@ class AuthService:
         )
     
     @staticmethod
-    def register_user(db: Session, email: str, password: str, full_name: str, role: str) -> User:
+    def register_user(db: Session, email: str, password: str, full_name: str, role: UserRole = UserRole.PARENT) -> User:
         """Register a new user."""
         existing_user = db.query(User).filter(User.email == email).first()
         if existing_user:

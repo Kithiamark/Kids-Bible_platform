@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { progressAPI } from '../../lib/api';
 import { useStudentTheme } from '../../lib/theme';
-import { TrendingUp, Award, Clock, Star, Calendar } from 'lucide-react';
+import { TrendingUp, Award, Clock, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function StudentProgress() {
@@ -102,12 +102,14 @@ export default function StudentProgress() {
           <div>
             <div className="flex justify-between mb-2">
               <span className={theme.textSecondary}>Quizzes Passed</span>
-              <span className={`font-bold ${theme.text}`}>0</span>
+              <span className={`font-bold ${theme.text}`}>
+                {stats?.quizzes_passed || 0} / {stats?.quizzes_attempted || 0}
+              </span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-3">
               <div 
                 className={`${theme.secondary} h-3 rounded-full transition-all duration-1000`}
-                style={{ width: '0%' }} // TODO: Add quizzes passed to stats
+                style={{ width: `${stats?.quizzes_attempted ? (stats.quizzes_passed / stats.quizzes_attempted) * 100 : 0}%` }}
               ></div>
             </div>
           </div>

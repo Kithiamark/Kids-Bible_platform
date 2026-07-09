@@ -71,11 +71,13 @@ class QuizCreate(QuizBase):
 
 
 class QuizUpdate(BaseModel):
+    lesson_id: Optional[int] = None
     title: Optional[str] = None
     description: Optional[str] = None
     passing_score: Optional[float] = None
     max_attempts: Optional[int] = None
     is_active: Optional[bool] = None
+    questions: Optional[List[QuestionCreate]] = None
 
 
 class QuizResponse(QuizBase):

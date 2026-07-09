@@ -12,7 +12,7 @@ class StudentBase(BaseModel):
 
 
 class StudentCreate(StudentBase):
-    parent_id: int
+    parent_id: Optional[int] = None
 
 
 class StudentUpdate(BaseModel):

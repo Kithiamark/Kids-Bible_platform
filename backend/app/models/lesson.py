@@ -1,9 +1,10 @@
 import enum
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Enum as SQLEnum, Boolean
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 from app.models.student import AgeGroup
+from app.models.types import value_enum
 
 
 class MediaType(str, enum.Enum):
@@ -19,7 +20,7 @@ class Lesson(Base):
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     content = Column(Text, nullable=False)
-    age_group = Column(SQLEnum(AgeGroup), nullable=False)
+    age_group = Column(value_enum(AgeGroup, "agegroup"), nullable=False)
     order_index = Column(Integer, nullable=False)
     is_published = Column(Boolean, default=False, nullable=False)
     thumbnail_url = Column(String, nullable=True)
@@ -39,7 +40,7 @@ class LessonMedia(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False)
-    media_type = Column(SQLEnum(MediaType), nullable=False)
+    media_type = Column(value_enum(MediaType, "mediatype"), nullable=False)
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     url = Column(String, nullable=False)
