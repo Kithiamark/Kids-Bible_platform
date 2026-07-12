@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authAPI } from '../../lib/api';
+import { authAPI, type RegisterPayload } from '../../lib/api';
 import toast from 'react-hot-toast';
 
 export default function Register() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegisterPayload>({
     email: '',
     password: '',
     full_name: '',

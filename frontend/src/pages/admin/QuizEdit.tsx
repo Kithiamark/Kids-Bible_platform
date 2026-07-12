@@ -169,7 +169,7 @@ export default function QuizEdit() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-            <textarea name="description" rows={3} defaultValue={quiz.description} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" />
+            <textarea name="description" rows={3} defaultValue={quiz.description ?? ''} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -179,7 +179,7 @@ export default function QuizEdit() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Max Attempts</label>
-              <input name="max_attempts" type="number" min="1" defaultValue={quiz.max_attempts} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" />
+              <input name="max_attempts" type="number" min="1" defaultValue={quiz.max_attempts ?? 1} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" />
             </div>
             <label className="flex items-center gap-2 self-end rounded-lg border border-gray-200 px-4 py-2">
               <input name="is_active" type="checkbox" defaultChecked={quiz.is_active} className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded" />

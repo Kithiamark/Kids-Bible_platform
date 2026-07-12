@@ -104,7 +104,7 @@ export default function LessonEdit() {
             <textarea
               name="description"
               rows={3}
-              defaultValue={lesson.description}
+              defaultValue={lesson.description ?? ''}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
@@ -152,7 +152,7 @@ export default function LessonEdit() {
             <input
               name="thumbnail_url"
               type="url"
-              defaultValue={lesson.thumbnail_url}
+              defaultValue={lesson.thumbnail_url ?? ''}
               placeholder="https://example.com/image.jpg"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
@@ -177,7 +177,7 @@ export default function LessonEdit() {
                 <input
                   name="media_url"
                   type="url"
-                  defaultValue={currentMedia.url}
+                  defaultValue={currentMedia.url ?? ''}
                   placeholder="https://youtube.com/watch?v=... or https://open.spotify.com/..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
@@ -187,7 +187,7 @@ export default function LessonEdit() {
                 <input
                   name="media_title"
                   type="text"
-                  defaultValue={currentMedia.title}
+                  defaultValue={currentMedia.title ?? ''}
                   placeholder="Introduction Video"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />

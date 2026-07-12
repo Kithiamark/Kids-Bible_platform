@@ -88,7 +88,7 @@ export default function ParentDashboard() {
         <div className="p-6">
           {(dashboard?.recent_activity?.length || 0) > 0 ? (
             <div className="space-y-4">
-              {dashboard.recent_activity.map((activity: any, index: number) => (
+              {(dashboard?.recent_activity ?? []).map((activity: any, index: number) => (
                 <div key={`${activity.student_id}-${activity.activity_type}-${index}`} className="flex items-start gap-3 rounded-lg border border-gray-100 p-3">
                   <div className={`mt-1 rounded-full p-2 ${activity.activity_type.includes('quiz') ? 'bg-amber-50 text-amber-600' : 'bg-teal-50 text-teal-600'}`}>
                     {activity.activity_type.includes('quiz') ? <CheckCircle2 className="h-4 w-4" /> : <GraduationCap className="h-4 w-4" />}

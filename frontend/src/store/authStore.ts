@@ -13,7 +13,7 @@ interface Student {
   username: string;
   display_name: string;
   age_group: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
   current_level: number;
   total_points: number;
 }
